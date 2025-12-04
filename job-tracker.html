@@ -1,0 +1,117 @@
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Tracker Saya</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+    body {font-family: 'Inter', sans-serif; background: #f4f6f9; color: #2d3748; margin:0; padding:20px;}
+    h1 {text-align:center; color:#4c1d95;}
+    table {width:100%; border-collapse:collapse; margin:25px 0; background:white; box-shadow:0 4px 20px rgba(0,0,0,0.05); border-radius:12px; overflow:hidden;}
+    th {background:#4c1d95; color:white; padding:15px; text-align:left;}
+    td {padding:12px 15px; border-bottom:1px solid #e2e8f0;}
+    tr:hover {background:#f8f5ff;}
+    .status {padding:5px 12px; border-radius:20px; color:white; font-size:0.85em; font-weight:600;}
+    .applied {background:#ed8936;}
+    .test {background:#f6ad55;}
+    .interview {background:#9f7aea;}
+    .offer {background:#48bb78;}
+    .rejected {background:#f56565;}
+    .add-btn {background:#4c1d95; color:white; border:none; padding:12px 24px; border-radius:8px; cursor:pointer; font-size:1em;}
+    .add-btn:hover {background:#6b46c1;}
+    .stats {display:flex; gap:20px; flex-wrap:wrap; margin:20px 0;}
+    .card {background:white; padding:20px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.05); flex:1; min-width:200px; text-align:center;}
+    .card h3 {margin:0; color:#4c1d95; font-size:1.8em;}
+  </style>
+</head>
+<body>
+  <h1>🚀 Job Application Tracker Saya</h1>
+
+  <div class="stats">
+    <div class="card"><h3 id="total">0</h3><p>Total Apply</p></div>
+    <div class="card"><h3 id="interview">0</h3><p>Interview</p></div>
+    <div class="card"><h3 id="offer">0</h3><p>Offer 💰</p></div>
+    <div class="card"><h3 id="rate">0%</h3><p>Success Rate</p></div>
+  </div>
+
+  <button class="add-btn" onclick="addRow()">+ Tambah Lamaran Baru</button>
+
+  <table id="tracker">
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Perusahaan</th>
+        <th>Posisi</th>
+        <th>Tanggal Apply</th>
+        <th>Status</th>
+        <th>Catatan</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- baris akan ditambah lewat JS -->
+    </tbody>
+  </table>
+
+  <script>
+    const statuses = ["Applied", "Test", "Interview 1", "Interview 2", "Offer", "Rejected"];
+    const statusColors = {
+      "Applied": "applied", "Test": "test", "Interview 1": "interview",
+      "Interview 2": "interview", "Offer": "offer", "Rejected": "rejected"
+    };
+
+    let data = JSON.parse(localStorage.getItem('jobTracker')) || [];
+    renderTable();
+
+    function renderTable() {
+      const tbody = document.querySelector('#tracker tbody');
+      tbody.innerHTML = '';
+      data.forEach((item, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${i+1}</td>
+          <td>${item.company}</td>
+          <td>${item.position}</td>
+          <td>${item.date}</td>
+          <td><span class="status ${statusColors[item.status]}">${item.status}</span></td>
+          <td>${item.notes}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      updateStats();
+    }
+
+    function addRow() {
+      const company = prompt("Nama Perusahaan:");
+      if (!company) return;
+      const position = prompt("Posisi yang dilamar:");
+      const date = new Date().toISOString().slice(0,10);
+      const status = "Applied";
+      const notes = prompt("Catatan (link job post, nama HR, dll):", "");
+
+      data.push({company, position, date, status, notes});
+      localStorage.setItem('jobTracker', JSON.stringify(data));
+      renderTable();
+    }
+
+    // klik status untuk ganti (double click biar gampang)
+    document.addEventListener('dblclick', e => {
+      if (e.target.classList.contains('status')) {
+        const rowIndex = Array.from(e.target.closest('table').querySelectorAll('tr')).indexOf(e.target.closest('tr')) - 1;
+        const current = data[rowIndex].status;
+        const nextIndex = (statuses.indexOf(current) + 1) % statuses.length;
+        data[rowIndex].status = statuses[nextIndex];
+        localStorage.setItem('jobTracker', JSON.stringify(data));
+        renderTable();
+      }
+    });
+
+    function updateStats() {
+      document.getElementById('total').textContent = data.length;
+      document.getElementById('interview').textContent = data.filter(x => x.status.includes('Interview')).length;
+      document.getElementById('offer').textContent = data.filter(x => x.status === 'Offer').length;
+      const rate = data.length > 0 ? Math.round((data.filter(x => x.status === 'Offer').length / data.length) * 100) : 0;
+      document.getElementById('rate').textContent = rate + '%';
+    }
+  </script>
+</body>
+</html>
